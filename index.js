@@ -10,7 +10,7 @@ var executeQuery = function (bigQueryConfig, bigQueryConfigPath, user, startTime
   startTime = startTime || '2016-01-01';
   endTime = endTime || '2016-01-01';
 
-  var QUERY_STRING = `SELECT repo_name FROM( SELECT type, JSON_EXTRACT(payload, '$.action') as event, JSON_EXTRACT(payload, '$.pull_request.merged') as merged, JSON_EXTRACT(payload, '$.pull_request.user.login') as sender, JSON_EXTRACT(payload, '$.pull_request.base.repo.owner.login') as owner, JSON_EXTRACT(payload, '$.pull_request.base.repo.full_name') as repo_name, FROM (TABLE_DATE_RANGE([githubarchive:day.], TIMESTAMP('${startTime}'), TIMESTAMP('${endTime}'))) WHERE type = 'PullRequestEvent' ) WHERE event = '"closed"' AND merged = 'true' AND sender = '"${user}"' AND owner != '"${user}"' Group by repo_name`;
+  var QUERY_STRING = `SELECT repo_name, repo_description, repo_stars FROM( SELECT type, JSON_EXTRACT(payload, '$.action') AS event, JSON_EXTRACT(payload, '$.pull_request.merged') AS merged, JSON_EXTRACT(payload, '$.pull_request.user.login') AS sender, JSON_EXTRACT(payload, '$.pull_request.base.repo.owner.login') AS owner, JSON_EXTRACT(payload, '$.pull_request.base.repo.full_name') AS repo_name, JSON_EXTRACT(payload, '$.pull_request.base.repo.description') AS repo_description, JSON_EXTRACT(payload, '$.pull_request.base.repo.stargazers_count') AS repo_stars, FROM (TABLE_DATE_RANGE([githubarchive:day.], TIMESTAMP('${startTime}'), TIMESTAMP('${endTime}'))) WHERE type = 'PullRequestEvent') WHERE event = '"closed"' AND merged = 'true' AND sender = '"${user}"' AND owner != '"${user}"' GROUP BY repo_name, repo_description, repo_stars`;
 
   return new Promise(function(resolve, reject) {
     bigquery.query(QUERY_STRING, function (err, rows) {
